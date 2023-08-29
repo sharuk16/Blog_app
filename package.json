@@ -18,6 +18,7 @@
     "git": "^0.1.5",
     "mongodb": "^5.8.1",
     "mongoose": "^7.4.5",
+    "multer": "^1.4.5-lts.1",
     "sqlite3": "^5.1.6",
     "vue": "^3.3.4"
   },
@@ -30,5 +31,6 @@
   "description": "This template should help get you started developing with Vue 3 in Vite.",
   "main": "server.js",
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "keywords": []
 }

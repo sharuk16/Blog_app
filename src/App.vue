@@ -1,10 +1,12 @@
 <script setup>
 import {ref} from "vue"
 
-const showModal = ref(false)
-const newPost = ref("")  //two way binding
-const posts = ref([])
-const errorMsg = ref("")
+const showModal = ref(false);
+const newPost = ref("");
+const posts = ref([]);
+const errorMsg = ref("");
+const editMode = ref(false);
+const editedPost = ref(""); // Add this line
 
 
 const addPost = () => {
@@ -27,6 +29,32 @@ const deletePost = (postId) => {
     posts.value.splice(index, 1);
   }
 };
+
+const editPost = (post) => {
+  editMode.value = true;
+  editedPost.value = post.text;
+};
+
+const saveEditedPost = () => {
+  if (editedPost.value.length < 2) {
+    errorMsg.value = "Post needs to be at least 30 characters";
+    return;
+  }
+  const editedIndex = posts.value.findIndex((post) => post.id === posts[editPostIndex].id);
+  if (editedIndex !== -1) {
+    posts.value[editedIndex].text = editedPost.value;
+  }
+  editMode.value = false;
+  editedPost.value = "";
+  errorMsg.value = "";
+};
+
+const cancelEdit = () => {
+  editMode.value = false;
+  editedPost.value = "";
+  errorMsg.value = "";
+};
+
 </script> 
 
 
@@ -40,6 +68,16 @@ const deletePost = (postId) => {
         <button @click = "addPost">Create Post</button>
         <button class="discard" @click="showModal = false">Discard</button>
       </div>
+      
+      <div v-if="editMode" class="overlay">
+  <div class="modal">
+    <textarea v-model.trim="posts[editPostIndex].text" name="post" id="post" cols="30" rows="10"></textarea>
+    <p v-if="errorMsg">{{ errorMsg }}</p>
+    <button @click="saveEditedPost">Save Changes</button>
+    <button class="discard" @click="cancelEdit">Cancel</button>
+  </div>
+</div>
+
 </div>
 
     <div class="container">
@@ -54,7 +92,8 @@ const deletePost = (postId) => {
   <p class="main-txt">{{ post.text }}</p>
   <p class="date">{{ post.date.toLocaleDateString("en-UK") }}</p>
   <button @click="deletePost(post.id)" class="delete-button">Delete</button>
-  <button @click="editshowModal = true" class="edit-button">Edit</button>
+  <button @click="editMode = true; editPostIndex = posts.indexOf(post)" class="edit-button">Edit</button>
+
   
 </div>
 
@@ -81,6 +120,7 @@ main {
   height: 100vh;
   width: 100vw;
   background: rgb(40,37,102);
+  background-attachment: fixed;
 background: linear-gradient(90deg, rgba(40,37,102,1) 0%, rgba(9,9,121,1) 35%, rgba(0,212,255,1) 100%);
 }
 
