@@ -1,44 +1,55 @@
-const express = require("express");
-const cors = require("cors");
-const sqlite3 = require("sqlite3").verbose();
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
-app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
-const db = new sqlite3.Database("posts.db");
-
-app.get("/api/posts", (req, res) => {
-  db.all("SELECT * FROM posts", (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: "Internal Server Error" });
-    } else {
-      res.json(rows);
-    }
-  });
+mongoose.connect('mongodb://localhost:27017/?authMechanism=DEFAULT', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
-app.post("/api/posts", (req, res) => {
-  const { text } = req.body;
-  if (text && text.length >= 2) {
-    db.run("INSERT INTO posts (text, date) VALUES (?, ?)", [text, new Date()], (err) => {
-      if (err) {
-        res.status(500).json({ error: "Internal Server Error" });
-      } else {
-        res.status(201).json({ message: "Post added successfully" });
-      }
+
+const postSchema = new mongoose.Schema({
+  text: String,
+  date: Date,
+});
+
+const Post = mongoose.model('Post', postSchema);
+
+app.post('/api/posts', async (req, res) => {
+  try {
+    const post = new Post({
+      text: req.body.text,
+      date: new Date(),
     });
-  } else {
-    res.status(400).json({ error: "Invalid post data" });
+    await post.save();
+    res.status(201).json(post);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred.' });
   }
 });
 
-// Add routes for updating and deleting posts
+app.get('/api/posts', async (req, res) => {
+  try {
+    const posts = await Post.find().sort({ date: -1 });
+    res.json(posts);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred.' });
+  }
+});
 
-db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY, text TEXT, date TEXT)");
+
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    await Post.findByIdAndDelete(req.params.id);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred.' });
+  }
 });
 
 app.listen(port, () => {
